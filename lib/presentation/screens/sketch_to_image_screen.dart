@@ -4,6 +4,7 @@ import 'dart:typed_data';
 import 'dart:io';
 import 'package:flutter/material.dart' show Path;
 import 'package:path_provider/path_provider.dart';
+import '../../core/theme/app_colors.dart';
 import '../../core/services/image_generation_service.dart';
 import '../widgets/liquid_card.dart';
 
@@ -119,7 +120,7 @@ class _SketchToImageScreenState extends State<SketchToImageScreen>
     final size = MediaQuery.of(context).size;
     canvas.drawRect(
       Rect.fromLTWH(0, 0, size.width, size.height),
-      Paint()..color = const Color(0xFF1C1C1E),
+      Paint()..color = AppColors.background,
     );
     
     for (final stroke in _strokes) {
@@ -285,7 +286,7 @@ class _SketchToImageScreenState extends State<SketchToImageScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF1C1C1E),
+      backgroundColor: AppColors.background,
       body: Stack(
         children: [
           // Drawing Canvas
@@ -557,7 +558,7 @@ class _SketchToImageScreenState extends State<SketchToImageScreen>
   void _showColorPicker(List<Color> colors) {
     showModalBottomSheet(
       context: context,
-      backgroundColor: const Color(0xFF2C2C2E),
+      backgroundColor: AppColors.surface,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
@@ -641,7 +642,7 @@ class _SketchToImageScreenState extends State<SketchToImageScreen>
   void _showBrushSlider() {
     showModalBottomSheet(
       context: context,
-      backgroundColor: const Color(0xFF2C2C2E),
+      backgroundColor: AppColors.surface,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
@@ -780,7 +781,7 @@ class _SketchPainter extends CustomPainter {
     // Background
     canvas.drawRect(
       Rect.fromLTWH(0, 0, size.width, size.height),
-      Paint()..color = const Color(0xFF1C1C1E),
+      Paint()..color = AppColors.background,
     );
     
     // Grid pattern for sketch feel
@@ -798,7 +799,7 @@ class _SketchPainter extends CustomPainter {
     
     // Draw strokes
     final paint = Paint()
-      ..color = isErasing ? const Color(0xFF1C1C1E) : brushColor
+      ..color = isErasing ? AppColors.background : brushColor
       ..strokeWidth = isErasing ? brushSize * 3 : brushSize
       ..strokeCap = StrokeCap.round
       ..strokeJoin = StrokeJoin.round

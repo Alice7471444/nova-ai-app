@@ -3,83 +3,112 @@ import 'package:flutter/material.dart';
 class AppColors {
   AppColors._();
 
-  // iOS Liquid Glass Style - Premium Minimal
-  
-  // Primary - Apple-style blue
-  static const Color primary = Color(0xFF007AFF);
-  static const Color primaryLight = Color(0xFF5AC8FA);
-  static const Color primaryDark = Color(0xFF0051DB);
-  
-  // Secondary - Clean gray
-  static const Color secondary = Color(0xFF8E8E93);
-  static const Color secondaryLight = Color(0xFFAEAEB2);
-  static const Color secondaryDark = Color(0xFF636366);
-  
-  // Accent - iOS Green
-  static const Color accent = Color(0xFF34C759);
-  static const Color accentLight = Color(0xFF30D158);
-  static const Color accentDark = Color(0xFF248A3D);
-  
-  // Background - iOS System
-  static const Color background = Color(0xFFF2F2F7);  // iOS system gray
-  static const Color backgroundDark = Color(0xFF000000);
-  static const Color backgroundLight = Color(0xFFFFFFFF);
-  static const Color backgroundCard = Color(0xFFFFFFFF);
-  static const Color surface = Color(0xFFFFFFFF);
-  static const Color surfaceLight = Color(0xFFF2F2F7);
-  
-  // Glass (softer blur)
-  static const Color glassWhite = Color(0x08FFFFFF);
-  static const Color glassPrimary = Color(0x0A007AFF);
-  static const Color glassCyan = Color(0x0A5AC8FA);
-  
-  // Text - iOS
-  static const Color textPrimary = Color(0xFF000000);
-  static const Color textSecondary = Color(0xFF3C3C43);
-  static const Color textTertiary = Color(0xFF8E8E93);
-  static const Color textHint = Color(0xFFC7C7CC);
-  
-  // Dark mode text
-  static const Color textPrimaryDark = Color(0xFFFFFFFF);
-  static const Color textSecondaryDark = Color(0xFFEBEBF5);
-  static const Color textTertiaryDark = Color(0xFF8E8E93);
-  
-  // Status
-  static const Color success = Color(0xFF34C759);
-  static const Color error = Color(0xFFFF3B30);
-  static const Color warning = Color(0xFFFF9500);
-  static const Color info = Color(0xFF5AC8FA);
-  
-  // Gradients (subtle iOS)
+  // ═══════════════════════════════════════════════════════════════
+  // iOS 26 LIQUID GLASS - Futuristic Premium Design
+  // ═════════════════════════════════════════════════════════════
+
+  // Primary - Futuristic Purple/Blue
+  static const Color primary = Color(0xFF667EEA);
+  static const Color primaryLight = Color(0xFF9F7AEA);
+  static const Color primaryDark = Color(0xFF4C6ED6);
+
+  // Secondary - Accent Cyan
+  static const Color secondary = Color(0xFF4ECDC4);
+  static const Color secondaryLight = Color(0xFF6EE7DE);
+  static const Color secondaryDark = Color(0xFF36B9B0);
+
+  // Accent - Magical Pink
+  static const Color accent = Color(0xFFF093FB);
+  static const Color accentLight = Color(0xFFF5A8F9);
+  static const accentDark = Color(0xFFD558F5);
+
+  // ═══════════════════════════════════════════════════════════════
+  // Background - Deep Dark (Liquid Glass)
+  // ═════════════════════════════════════════════════════════════
+  static const Color background = Color(0xFF0A0A0F);
+  static const backgroundDark = Color(0xFF000000);
+  static const backgroundLight = Color(0xFF1C1C2E);
+  static const backgroundCard = Color(0xFF16161F);
+  static const surface = Color(0xFF1A1A28);
+  static const surfaceLight = Color(0xFF242438);
+
+  // ═══════════════════════════════════════════════════════════════
+  // Liquid Glass Effects
+  // ═════════════════════════════════════════════════════════════
+  static const Color glassWhite = Color(0x12FFFFFF);
+  static const glassPrimary = Color(0x1A667EEA);
+  static const glassCyan = Color(0x1A4ECDC4);
+  static const glassPink = Color(0x1AF093FB);
+  static const glassBorder = Color(0x2EFFFFFF);
+  static const glassBorderLight = Color(0x08FFFFFF);
+
+  // Gradient Effects
   static const List<Color> primaryGradient = [
-    Color(0xFF007AFF),
-    Color(0xFF5AC8FA),
+    Color(0xFF667EEA),
+    Color(0xFFF093FB),
   ];
-  
+
   static const List<Color> glassGradient = [
-    Color(0xFFFFFFFF),
-    Color(0xFFF2F2F7),
+    Color(0xFF667EEA),
+    Color(0xFF4ECDC4),
   ];
-  
+
   static const List<Color> darkGradient = [
-    Color(0xFF1C1C1E),
-    Color(0xFF2C2C2E),
+    Color(0xFF1C1C2E),
+    Color(0xFF16161F),
   ];
-  
-  // Shadows (iOS style)
+
+  static const List<Color> neonGradient = [
+    Color(0xFF667EEA),
+    Color(0xFF4ECDC4),
+    Color(0xFFF093FB),
+  ];
+
+  // ═══════════════════════════════════════════════════════════════
+  // Text - Premium White
+  // ═════════════════════════════════════════════════════════════
+  static const textPrimary = Color(0xFFFFFFFF);
+  static const textSecondary = Color(0xFFE0E0E8);
+  static const textTertiary = Color(0xFF8E8E9A);
+  static const textHint = Color(0xFF5A5A6A);
+
+  // Dark mode text (already dark in this theme)
+  static const textPrimaryDark = Color(0xFFFFFFFF);
+  static const textSecondaryDark = Color(0xFFE0E0E8);
+  static const textTertiaryDark = Color(0xFF8E8E9A);
+
+  // ═══════════════════════════════════════════════════════════════
+  // Status Colors
+  // ═════════════════════════════════════════════════════════════
+  static const success = Color(0xFF4ECDC4);
+  static const error = Color(0xFFFF6B6B);
+  static const warning = Color(0xFFFFD93D);
+  static const info = Color(0xFF667EEA);
+
+  // ═══════════════════════════════════════════════════════════════
+  // Shadows - iOS 26 Liquid Glow
+  // ═════════════════════════════════════════════════════════════
   static List<BoxShadow> get softShadow => [
     BoxShadow(
-      color: Color(0x0A000000),
+      color: Color(0x40667EEA),
       blurRadius: 20,
       offset: Offset(0, 4),
     ),
   ];
-  
+
   static List<BoxShadow> get cardShadow => [
     BoxShadow(
-      color: Color(0x05000000),
+      color: Color(0x20667EEA),
       blurRadius: 10,
       offset: Offset(0, 2),
+    ),
+  ];
+
+  static List<BoxShadow> get glowShadow => [
+    BoxShadow(
+      color: Color(0x60667EEA),
+      blurRadius: 30,
+      spreadRadius: 5,
     ),
   ];
 }

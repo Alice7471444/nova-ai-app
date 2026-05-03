@@ -84,7 +84,7 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.black,
+      backgroundColor: AppColors.background,
       appBar: _buildAppBar(),
       body: IndexedStack(index: _currentTab, children: [_chatTab(), _discoverTab(), _settingsTab(), const SketchToImageScreen()]),
       bottomNavigationBar: _buildBottomNav(),
