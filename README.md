@@ -1,157 +1,137 @@
 <div align="center">
 
 # 🌀 NOVA AI
+### Premium AI Ecosystem
 
-### The Future of AI Assistants
-
-[![Android](https://img.shields.io/badge/Android-5.0%2B-00F0FF?style=for-the-badge&logo=android)](https://flutter.dev)
-[![Flutter](https://img.shields.io/badge/Flutter-3.24.5-00F0FF?style=for-the-badge&logo=flutter)](https://flutter.dev)
-[![License](https://img.shields.io/badge/License-MIT-00F0FF?style=for-the-badge)](LICENSE)
-[![Download APK](https://img.shields.io/github/v/release/Alice7471444/nova-ai-app?style=for-the-badge&color=00F0FF&label=APK)](https://github.com/Alice7471444/nova-ai-app/releases)
+[![Android](https://img.shields.io/badge/Android-6.0+-00F0FF?style=for-the-badge&logo=android)](https://flutter.dev)
+[![Flutter](https://img.shields.io/badge/Flutter-3.24-00F0FF?style=for-the-badge&logo=flutter)](https://flutter.dev)
+[![Download](https://img.shields.io/github/v/release/Alice7471444/nova-ai-app?style=for-the-badge&color=667EEA&label=APK)](https://github.com/Alice7471444/nova-ai-app/releases)
 
 ---
 
-**NOVA AI** - A futuristic Android AI assistant app with cyberpunk/premium design. Features AI chat, voice assistant, customizable themes, and more!
+The future of AI assistants. A premium Android app with **iOS 26 liquid glass design** — elegant, smooth, and futuristic.
+
+</div>
 
 ---
 
-## ✨ Features
+## ✨ What's New v4.0
 
 | Feature | Description |
 |---------|-------------|
-| 🤖 **AI Chat** | Chat with GPT-4o or Gemini AI |
-| 🎤 **Voice UI** | Futuristic voice assistant interface |
-| 🌆 **Cyberpunk Theme** | Neon glassmorphic dark UI |
-| 🎮 **Gaming Mode** | Focus mode for better UX |
-| ⚙️ **Settings** | Customize your experience |
-| 📱 **Widgets** | Custom neon widgets |
+| 🔮 **Liquid Glass UI** | iOS 26-style translucent panels with depth |
+| 🎨 **Neon Gradients** | Purple → Cyan → Pink glow effects |
+| ✏️ **Sketch to Image** | Draw anything, AI transforms it to image |
+| 🔐 **Google Sign-In** | One-tap authentication |
+| 📱 **4-Screen Onboarding** | Futuristic welcome flow |
+| 🤖 **Auto AI Connect** | Connects automatically — no API key needed |
 
 ---
 
-## App Preview
+## 🚀 App Flow
 
 ```
-┌─────────────────────────────────┐
-│          🌀 NOVA AI              │
-│  ┌─────────────────────────────┐  │
-│  │  Welcome to the Future!   │  │
-│  │   Your AI Assistant      │  │
-│  └─────────────────────────────┘  │
-│                                 │
-│  [🤖 Chat]  [🎤 Voice]        │
-│  [🏠 Home]   [⚙ Settings]     │
-│                                 │
-│    ● ○ ○   Gaming Mode: OFF     │
-└─────────────────────────────────┘
+┌─────────────────────────────────────────┐
+│         NOVA AI v4.0 Flow              │
+├─────────────────────────────────────────┤
+│                                         │
+│  📱 INSTALL                             │
+│      ↓                                  │
+│  🏠 SPLASH (3s)                         │
+│      ↓                                  │
+│  ┌─ First time? ─┐ → ONBOARDING        │
+│  │      ↓         │    (4 screens)    │
+│  │   Yes    No    │         ↓          │
+│  └──────┼────────┘    LOGIN           │
+│         ↓             ↓                │
+│     LOGIN         HOME                 │
+│         ↓                              │
+│      HOME                              │
+│                                         │
+│  🏠 HOME: Chat • Voice • Sketch • More │
+└─────────────────────────────────────────┘
 ```
 
 ---
 
-## 🚀 Quick Start
+## 🎯 Features
 
-### Prerequisites
-- Flutter SDK 3.24+
-- Android SDK 34
-- Java 17
+| **🤖 AI Chat** | Smart AI assistant |
+| **🎤 Voice** | Voice commands |
+| **✏️ Sketch** | Draw → AI Image |
+| **⚙️ Settings** | Account & prefs |
+| **🔊 Speech** | Speech recognition |
+| **🌙 Dark Mode** | OLED black |
 
-### Clone & Run
+---
+
+## 📱 Screens
+
+| HOME | CHAT |
+|------|------|
+| Nova AI assistant | Conversational AI |
+| Voice search | Smart replies |
+| Sketch to Image | History |
+
+---
+
+## 🎨 Design: iOS 26 Liquid Glass
+
+| Element | Color |
+|---------|-------|
+| Background | `#0A0A0F` (Deep Black) |
+| Surface | `#1A1A2E` (Dark Navy) |
+| Primary | Purple → Cyan gradient |
+| Accent | Pink neon |
+
+- Glassmorphic containers with blur
+- Smooth animations
+- Neon glow shadows
+
+---
+
+## 📥 Install
+
+**[NOVA AI v4.0.1 APK](https://github.com/Alice7471444/nova-ai-app/releases/download/v4.0.1/app-debug.apk)**
+
+### Build from Source
 ```bash
 git clone https://github.com/Alice7471444/nova-ai-app.git
 cd nova-ai-app
 flutter pub get
-flutter run
-```
-
-### Build APK
-```bash
 flutter build apk --debug
 ```
 
 ---
 
-## ⚙️ Configuration
+## 🛠️ Tech Stack
 
-### Get API Keys
-
-| AI Provider | Link | Free Tier |
-|-------------|-----|----------|
-| **Gemini** (Recommended) | [Google AI Studio](https://aistudio.google.com/app/apikey) | 15 req/min |
-| **OpenAI** (GPT-4o) | [OpenAI API Keys](https://platform.openai.com/api-keys) | Paid |
-
-### Enter API Key
-1. Open NOVA AI app
-2. Go to **Settings**
-3. Tap **AI Provider** or **API Key**
-4. Paste your key
+| Category | Technology |
+|----------|-----------|
+| Framework | Flutter 3.24 |
+| Language | Dart 3.5 |
+| Auth | Google Sign-In |
+| AI | Groq / Gemini / OpenRouter |
+| UI | Custom Liquid Glass |
 
 ---
 
-## 🎨 Theme Colors
+## 🤝 Credits
 
-| Color | Hex | Usage |
-|-------|-----|-------|
-| 🟦 Neon Cyan | `#00F0FF` | Primary, accents |
-| 🟪 Neon Magenta | `#FF00FF` | Secondary |
-| 🟩 Neon Green | `#00FF88` | Gaming mode |
-| ⬛ Dark Black | `#0A0A0F` | Background |
-| ⬜ Surface Dark | `#1A1A2E` | Cards |
-
----
-
-## 📂 Project Structure
-
-```
-nova_ai/
-├── lib/
-│   ├── main.dart                    # App entry point
-│   ├── core/
-│   │   ├── theme/                   # App colors & theme
-│   │   ├── constants/              # App constants  
-│   │   └── services/              # AI services (OpenAI/Gemini)
-│   ├── data/
-│   │   └── models/                # Data models
-│   └── presentation/
-│       ├── screens/               # UI screens
-│       │   ├── home_screen.dart
-│       │   ├── chat_screen.dart
-│       │   ├── voice_screen.dart
-│       │   └── settings_screen.dart
-│       └── widgets/               # Custom widgets
-│           ├── neon_text.dart
-│           ├── glassmorphic_container.dart
-│           └── chat_bubble.dart
-├── android/                       # Android config
-├── pubspec.yaml                  # Dependencies
-├── README.md                    # This file
-└── LICENSE                     # MIT License
-```
-
----
-
-## 📥 Download APK
-
-**[Download Latest APK](https://github.com/Alice7471444/nova-ai-app/releases/download/v1.1.0/nova-ai-debug.apk)**
-
----
-
-## 🤝 Contributing
-
-1. Fork the repo
-2. Create your branch (`feature/your-feature`)
-3. Commit changes
-4. Push to branch
-5. Open Pull Request
+AI Providers:
+- **Groq** — Fastest inference
+- **Gemini** — Google's AI
+- **OpenRouter** — Multi-model
 
 ---
 
 ## 📄 License
 
-MIT License - See [LICENSE](LICENSE)
+MIT License
 
 ---
 
-**Made with ❤️ using Flutter**
+**NOVA AI** 🌀  
+*The Future is Now*
 
-*NOVA AI - The Future is Now* 🌀
-
-</div>
+*Built with ❤️ using Flutter*
