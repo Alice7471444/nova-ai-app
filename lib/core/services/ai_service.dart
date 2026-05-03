@@ -23,8 +23,10 @@ class AIService {
 
   Future<String> generateResponse(String message) async {
     final apiKey = await _getApiKey();
+    
+    // Fallback to demo responses if no API key
     if (apiKey.isEmpty) {
-      return "⚠️ API key not set. Go to Settings > AI Settings to enter your OpenAI API key.";
+      return _getDemoResponse(message);
     }
     
     try {
@@ -48,11 +50,38 @@ class AIService {
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
         return data['choices'][0]['message']['content'];
+      } else if (response.statusCode == 429) {
+        // Rate limit or no quota - use demo
+        return _getDemoResponse(message);
       } else {
         return 'Error: ${response.statusCode}';
       }
     } catch (e) {
-      return '❌ Connection error. Check internet.';
+      return _getDemoResponse(message);
     }
+  }
+  
+  String _getDemoResponse(String message) {
+    final msg = message.toLowerCase();
+    if (msg.contains('hello') || msg.contains('hi')) {
+      return "Hey there! I'm NOVA AI. Ask me anything!";
+    } else if (msg.contains('how are you')) {
+      return "I'm functioning at 100%! Ready to assist you.";
+    } else if (msg.contains('who are you')) {
+      return "I'm NOVA AI - your futuristic AI assistant!";
+    } else if (msg.contains('name')) {
+      return "I'm NOVA AI, created with Flutter and OpenAI GPT-4o.";
+    } else if (msg.contains('help')) {
+      return "I can answer questions, help with tasks, or just chat!";
+    } else if (msg.contains('time')) {
+      return "I don't know the exact time, but I'm always here for you!";
+    } else if (msg.contains('date')) {
+      return "Today is a great day! What would you like to do?";
+    } else if (msg.contains('weather')) {
+      return "I can't check the weather, but I hope it's sunny where you are!";
+    } else if (msg.contains('joke')) {
+      return "Why do programmers prefer dark mode? Because light attracts bugs! 😄";
+    }
+    return "That's an interesting question! Configure your OpenAI API key in Settings to unlock full AI responses!";
   }
 }
