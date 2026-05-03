@@ -17,6 +17,13 @@ dependencies:
   uuid: ^4.5.1
   http: ^1.2.0
   shared_preferences: ^2.2.2
+  # Voice & Speech
+  speech_to_text: ^6.6.2
+  permission_handler: ^11.3.1
+  # Image
+  image_picker: ^1.1.2
+  # State
+  provider: ^6.1.2
 
 dev_dependencies:
   flutter_test:

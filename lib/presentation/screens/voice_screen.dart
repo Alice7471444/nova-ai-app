@@ -1,63 +1,123 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:speech_to_text/speech_to_text.dart' as stt;
+import 'package:permission_handler/permission_handler.dart';
 import 'package:animate_do/animate_do.dart';
 import '../../core/theme/app_colors.dart';
-import '../widgets/neon_text.dart';
 import '../widgets/glassmorphic_container.dart';
-import '../widgets/chat_bubble.dart';
+import 'chat_screen.dart';
 
 class VoiceScreen extends StatefulWidget {
   const VoiceScreen({super.key});
-  
+
   @override
   State<VoiceScreen> createState() => _VoiceScreenState();
 }
 
 class _VoiceScreenState extends State<VoiceScreen> with TickerProviderStateMixin {
+  final stt.SpeechToText _speech = stt.SpeechToText();
   bool _isListening = false;
+  bool _speechEnabled = false;
   String _transcript = '';
-  bool _hasResult = false;
+  String _lastWords = '';
+  String _status = 'Tap to start';
   late AnimationController _pulseController;
   late Animation<double> _pulseAnimation;
 
   @override
   void initState() {
     super.initState();
+    _initSpeech();
     _pulseController = AnimationController(
       duration: const Duration(seconds: 2),
       vsync: this,
     )..repeat(reverse: true);
-    _pulseAnimation = Tween<double>(begin: 0.3, end: 1.0).animate(
+    _pulseAnimation = Tween<double>(begin: 1.0, end: 1.2).animate(
       CurvedAnimation(parent: _pulseController, curve: Curves.easeInOut),
     );
   }
 
-  void _toggleListening() {
-    setState(() {
-      _isListening = !_isListening;
-      if (_isListening) {
-        _transcript = 'Listening...';
-      }
-    });
-    
-    // Simulate listening for 3 seconds
-    if (_isListening) {
-      Future.delayed(const Duration(seconds: 3), () {
-        if (mounted) {
-          setState(() {
-            _isListening = false;
-            _transcript = 'Voice recognition ready!';
-            _hasResult = true;
-          });
-        }
+  Future<void> _initSpeech() async {
+    // Request microphone permission
+    final status = await Permission.microphone.request();
+    if (status.isGranted) {
+      _speechEnabled = await _speech.initialize(
+        onStatus: (status) {
+          if (mounted) {
+            setState(() {
+              _status = status == 'done' ? 'Tap to start' : status;
+            });
+          }
+        },
+        onError: (error) {
+          if (mounted) {
+            setState(() {
+              _status = 'Error: ${error.errorMsg}';
+              _isListening = false;
+            });
+          }
+        },
+      );
+      if (mounted) setState(() {});
+    } else {
+      setState(() {
+        _status = 'Microphone permission denied';
+        _speechEnabled = false;
       });
     }
   }
 
-  void _clearTranscript() {
+  void _startListening() async {
+    if (!_speechEnabled) {
+      await _initSpeech();
+      return;
+    }
+    HapticFeedback.mediumImpact();
     setState(() {
+      _isListening = true;
       _transcript = '';
-      _hasResult = false;
     });
+    await _speech.listen(
+      onResult: (result) {
+        setState(() {
+          _transcript = result.recognizedWords;
+          if (result.finalResult) {
+            _isListening = false;
+            _lastWords = _transcript;
+          }
+        });
+      },
+      listenFor: const Duration(seconds: 30),
+      pauseFor: const Duration(seconds: 3),
+      partialResults: true,
+    );
+  }
+
+  void _stopListening() async {
+    HapticFeedback.lightImpact();
+    await _speech.stop();
+    setState(() {
+      _isListening = false;
+    });
+  }
+
+  void _onMicTap() {
+    if (_isListening) {
+      _stopListening();
+    } else {
+      _startListening();
+    }
+  }
+
+  void _sendToChat() {
+    if (_transcript.isNotEmpty) {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          builder: (_) => ChatScreen(initialMessage: _transcript),
+        ),
+      );
+    }
   }
 
   @override
@@ -68,21 +128,18 @@ class _VoiceScreenState extends State<VoiceScreen> with TickerProviderStateMixin
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: AppColors.textPrimary),
+          icon: const Icon(Icons.arrow_back_ios, color: AppColors.textPrimary),
           onPressed: () => Navigator.pop(context),
         ),
-        title: const NeonText(
-          text: 'VOICE',
-          fontSize: 20,
-          color: AppColors.secondary,
+        title: const Text(
+          'Voice',
+          style: TextStyle(
+            color: AppColors.textPrimary,
+            fontSize: 18,
+            fontWeight: FontWeight.w600,
+          ),
         ),
         centerTitle: true,
-        actions: [
-          IconButton(
-            icon: Icon(Icons.delete_outline, color: AppColors.textSecondary),
-            onPressed: _clearTranscript,
-          ),
-        ],
       ),
       body: SafeArea(
         child: Padding(
@@ -93,7 +150,7 @@ class _VoiceScreenState extends State<VoiceScreen> with TickerProviderStateMixin
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    FadeIn(child: _buildVoiceAnimation()),
+                    FadeIn(child: _buildMicButton()),
                     const SizedBox(height: 40),
                     FadeInUp(
                       delay: const Duration(milliseconds: 200),
@@ -107,10 +164,11 @@ class _VoiceScreenState extends State<VoiceScreen> with TickerProviderStateMixin
                   ],
                 ),
               ),
-              FadeInUp(
-                delay: const Duration(milliseconds: 600),
-                child: _buildVoiceCommands(),
-              ),
+              if (_transcript.isNotEmpty)
+                FadeInUp(
+                  delay: const Duration(milliseconds: 500),
+                  child: _buildSendButton(),
+                ),
             ],
           ),
         ),
@@ -118,37 +176,40 @@ class _VoiceScreenState extends State<VoiceScreen> with TickerProviderStateMixin
     );
   }
 
-  Widget _buildVoiceAnimation() {
+  Widget _buildMicButton() {
     return AnimatedBuilder(
       animation: _pulseAnimation,
       builder: (context, child) {
-        return Transform.scale(
-          scale: _isListening ? 1.0 + (_pulseAnimation.value * 0.2) : 1.0,
-          child: Container(
-            width: 180,
-            height: 180,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              gradient: LinearGradient(
-                colors: _isListening 
-                    ? [AppColors.secondary, AppColors.accent]
-                    : [AppColors.primary, AppColors.primaryDark],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              ),
-              boxShadow: [
-                BoxShadow(
-                  color: (_isListening ? AppColors.secondary : AppColors.primary)
-                      .withOpacity(_isListening ? 0.6 : 0.4),
-                  blurRadius: _isListening ? 50 : 30,
-                  spreadRadius: _isListening ? 15 : 5,
+        return GestureDetector(
+          onTap: _onMicTap,
+          child: Transform.scale(
+            scale: _isListening ? _pulseAnimation.value : 1.0,
+            child: Container(
+              width: 160,
+              height: 160,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                gradient: LinearGradient(
+                  colors: _isListening
+                      ? [AppColors.primary, AppColors.accent]
+                      : [_speechEnabled ? AppColors.primary : AppColors.textTertiary, AppColors.primaryDark],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
                 ),
-              ],
-            ),
-            child: Icon(
-              _isListening ? Icons.mic : Icons.mic_none,
-              color: Colors.white,
-              size: 80,
+                boxShadow: [
+                  BoxShadow(
+                    color: (_isListening ? AppColors.primary : (_speechEnabled ? AppColors.primary : Colors.grey))
+                        .withOpacity(0.4),
+                    blurRadius: _isListening ? 40 : 20,
+                    spreadRadius: _isListening ? 10 : 2,
+                  ),
+                ],
+              ),
+              child: Icon(
+                _isListening ? Icons.mic : Icons.mic_none,
+                color: Colors.white,
+                size: 64,
+              ),
             ),
           ),
         );
@@ -160,46 +221,21 @@ class _VoiceScreenState extends State<VoiceScreen> with TickerProviderStateMixin
     return Column(
       children: [
         Text(
-          _isListening ? 'Listening...' : 'Tap to speak',
+          _isListening ? 'Listening...' : _status,
           style: TextStyle(
-            color: _isListening ? AppColors.secondary : AppColors.textSecondary,
+            color: _isListening ? AppColors.primary : AppColors.textSecondary,
             fontSize: 18,
             fontWeight: FontWeight.w500,
           ),
         ),
-        const SizedBox(height: 16),
-        GestureDetector(
-          onTap: _toggleListening,
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 16),
-            decoration: BoxDecoration(
-              color: (_isListening ? AppColors.secondary : AppColors.primary).withOpacity(0.2),
-              borderRadius: BorderRadius.circular(30),
-              border: Border.all(
-                color: _isListening ? AppColors.secondary : AppColors.primary,
-              ),
-            ),
-            child: Text(
-              _isListening ? 'STOP' : 'START',
-              style: TextStyle(
-                color: _isListening ? AppColors.secondary : AppColors.primary,
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-                letterSpacing: 2,
-              ),
-            ),
+        const SizedBox(height: 8),
+        Text(
+          _speechEnabled ? 'Tap microphone to speak' : 'Tap to enable voice',
+          style: TextStyle(
+            color: AppColors.textTertiary,
+            fontSize: 14,
           ),
         ),
-        if (!_isListening && !_hasResult) ...[
-          const SizedBox(height: 12),
-          Text(
-            'Tap to start voice recognition',
-            style: TextStyle(
-              color: AppColors.textTertiary,
-              fontSize: 12,
-            ),
-          ),
-        ],
       ],
     );
   }
@@ -218,13 +254,13 @@ class _VoiceScreenState extends State<VoiceScreen> with TickerProviderStateMixin
                 style: TextStyle(
                   color: AppColors.textTertiary,
                   fontSize: 12,
-                  fontWeight: FontWeight.bold,
-                  letterSpacing: 2,
+                  fontWeight: FontWeight.w600,
+                  letterSpacing: 1,
                 ),
               ),
               if (_transcript.isNotEmpty)
                 GestureDetector(
-                  onTap: _clearTranscript,
+                  onTap: () => setState(() => _transcript = ''),
                   child: const Icon(
                     Icons.close,
                     color: AppColors.textTertiary,
@@ -235,7 +271,9 @@ class _VoiceScreenState extends State<VoiceScreen> with TickerProviderStateMixin
           ),
           const SizedBox(height: 16),
           Text(
-            _transcript.isEmpty ? 'Your speech will appear here...' : _transcript,
+            _transcript.isEmpty
+                ? 'Your speech will appear here...'
+                : _transcript,
             textAlign: TextAlign.center,
             style: TextStyle(
               color: _transcript.isEmpty ? AppColors.textHint : AppColors.textPrimary,
@@ -248,66 +286,38 @@ class _VoiceScreenState extends State<VoiceScreen> with TickerProviderStateMixin
     );
   }
 
-  Widget _buildVoiceCommands() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text(
-          'EXAMPLE COMMANDS',
-          style: TextStyle(
-            color: AppColors.textTertiary,
-            fontSize: 12,
-            fontWeight: FontWeight.bold,
-            letterSpacing: 2,
-          ),
+  Widget _buildSendButton() {
+    return GestureDetector(
+      onTap: _sendToChat,
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(vertical: 16),
+        decoration: BoxDecoration(
+          color: AppColors.primary,
+          borderRadius: BorderRadius.circular(16),
         ),
-        const SizedBox(height: 16),
-        GlassmorphicContainer(
-          padding: const EdgeInsets.all(20),
-          borderRadius: 20,
-          child: Column(
-            children: [
-              _buildCommandItem('Open browser', Icons.language),
-              _buildCommandItem('Set a timer', Icons.timer),
-              _buildCommandItem('Send message', Icons.message),
-              _buildCommandItem('Play music', Icons.music_note),
-            ],
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildCommandItem(String command, IconData icon) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8),
-      child: Row(
-        children: [
-          Icon(icon, color: AppColors.secondary, size: 20),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Text(
-              command,
-              style: const TextStyle(
-                color: AppColors.textPrimary,
+        child: const Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.send, color: Colors.white, size: 20),
+            SizedBox(width: 8),
+            Text(
+              'Send to Chat',
+              style: TextStyle(
+                color: Colors.white,
                 fontSize: 16,
+                fontWeight: FontWeight.w600,
               ),
             ),
-          ),
-          Text(
-            '"Try it"',
-            style: TextStyle(
-              color: AppColors.textTertiary,
-              fontSize: 14,
-            ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
 
   @override
   void dispose() {
+    _speech.stop();
     _pulseController.dispose();
     super.dispose();
   }

@@ -1,13 +1,13 @@
-import 'dart:math';
+import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:animate_do/animate_do.dart';
-import 'package:flutter_staggered_animations/flutter_staggered_animations.dart';
 import '../../core/theme/app_colors.dart';
-import '../../core/constants/app_constants.dart';
-import '../widgets/neon_text.dart';
 import '../widgets/glassmorphic_container.dart';
 import 'chat_screen.dart';
 import 'voice_screen.dart';
+import 'settings_screen.dart';
+import 'search_apps_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -16,19 +16,29 @@ class HomeScreen extends StatefulWidget {
   State<HomeScreen> createState() => _HomeScreenState();
 }
 
-class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
-  late AnimationController _pulseController;
-  late Animation<double> _pulseAnimation;
+class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateMixin {
+  late AnimationController _fadeController;
 
   @override
   void initState() {
     super.initState();
-    _pulseController = AnimationController(
-      duration: const Duration(seconds: 2),
+    _fadeController = AnimationController(
+      duration: const Duration(milliseconds: 800),
       vsync: this,
-    )..repeat(reverse: true);
-    _pulseAnimation = Tween<double>(begin: 0.3, end: 0.8).animate(
-      CurvedAnimation(parent: _pulseController, curve: Curves.easeInOut),
+    )..forward();
+  }
+
+  void _navigateTo(Widget page, {String? name}) {
+    HapticFeedback.lightImpact();
+    Navigator.push(
+      context,
+      PageRouteBuilder(
+        pageBuilder: (_, __, ___) => page,
+        transitionsBuilder: (_, animation, __, child) {
+          return FadeTransition(opacity: animation, child: child);
+        },
+        transitionDuration: const Duration(milliseconds: 300),
+      ),
     );
   }
 
@@ -36,112 +46,81 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.background,
-      body: Stack(
-        children: [
-          _buildAnimatedBackground(),
-          _buildContent(),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildAnimatedBackground() {
-    return CustomPaint(
-      painter: BackgroundPainter(),
-      size: MediaQuery.of(context).size,
-    );
-  }
-
-  Widget _buildContent() {
-    return SafeArea(
-      child: CustomScrollView(
-        slivers: [
-          SliverToBoxAdapter(child: _buildHeader()),
-          SliverToBoxAdapter(child: _buildWelcomeCard()),
-          SliverToBoxAdapter(child: _buildQuickActions()),
-          SliverToBoxAdapter(child: _buildAICommands()),
-          SliverToBoxAdapter(child: _buildGamingMode()),
-        ],
+      body: SafeArea(
+        child: FadeTransition(
+          opacity: _fadeController,
+          child: SingleChildScrollView(
+            physics: const BouncingScrollPhysics(),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const SizedBox(height: 20),
+                  _buildHeader(),
+                  const SizedBox(height: 24),
+                  _buildWelcomeCard(),
+                  const SizedBox(height: 24),
+                  _buildQuickActions(),
+                  const SizedBox(height: 24),
+                  _buildFeatureGrid(),
+                  const SizedBox(height: 24),
+                  _buildVoiceSection(),
+                  const SizedBox(height: 40),
+                ],
+              ),
+            ),
+          ),
+        ),
       ),
     );
   }
 
   Widget _buildHeader() {
-    return Padding(
-      padding: const EdgeInsets.all(20),
+    return FadeInDown(
+      delay: const Duration(milliseconds: 100),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              FadeIn(
-                child: Text(
-                  'Welcome back',
-                  style: TextStyle(
-                    color: AppColors.textSecondary,
-                    fontSize: 14,
-                  ),
+              Text(
+                'Welcome back',
+                style: TextStyle(
+                  color: AppColors.textTertiary,
+                  fontSize: 14,
                 ),
               ),
               const SizedBox(height: 4),
-              FadeIn(
-                child: NeonText(
-                  text: 'NOVA AI',
+              const Text(
+                'NOVA AI',
+                style: TextStyle(
+                  color: AppColors.textPrimary,
                   fontSize: 28,
-                  color: AppColors.primary,
+                  fontWeight: FontWeight.w600,
                 ),
               ),
             ],
           ),
-          _buildStatusIndicator(),
+          GestureDetector(
+            onTap: () => _navigateTo(const SettingsScreen()),
+            child: Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: AppColors.surface,
+                borderRadius: BorderRadius.circular(14),
+                boxShadow: AppColors.cardShadow,
+              ),
+              child: const Icon(
+                Icons.settings_outlined,
+                color: AppColors.textSecondary,
+                size: 24,
+              ),
+            ),
+          ),
         ],
       ),
-    );
-  }
-
-  Widget _buildStatusIndicator() {
-    return AnimatedBuilder(
-      animation: _pulseAnimation,
-      builder: (context, child) {
-        return Container(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-          decoration: BoxDecoration(
-            color: AppColors.glassWhite,
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: AppColors.glassPrimary),
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                width: 8,
-                height: 8,
-                decoration: BoxDecoration(
-                  color: AppColors.success,
-                  shape: BoxShape.circle,
-                  boxShadow: [
-                    BoxShadow(
-                      color: AppColors.success.withOpacity(_pulseAnimation.value),
-                      blurRadius: 10,
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(width: 8),
-              const Text(
-                'ONLINE',
-                style: TextStyle(
-                  color: AppColors.success,
-                  fontSize: 12,
-                  fontWeight: FontWeight.bold,
-                  letterSpacing: 1,
-                ),
-              ),
-            ],
-          ),
-        );
-      },
     );
   }
 
@@ -149,7 +128,6 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     return FadeInUp(
       delay: const Duration(milliseconds: 200),
       child: GlassmorphicContainer(
-        margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
         padding: const EdgeInsets.all(24),
         borderRadius: 24,
         child: Column(
@@ -158,34 +136,31 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const NeonText(
-                  text: 'Hello!',
-                  fontSize: 28,
-                  color: AppColors.secondary,
+                const Text(
+                  'Hello!',
+                  style: TextStyle(
+                    color: AppColors.textPrimary,
+                    fontSize: 28,
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
                 Container(
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    gradient: const LinearGradient(colors: AppColors.neonGradient),
+                    gradient: const LinearGradient(colors: AppColors.primaryGradient),
                     borderRadius: BorderRadius.circular(16),
-                    boxShadow: [
-                      BoxShadow(
-                        color: AppColors.primary.withOpacity(0.4),
-                        blurRadius: 15,
-                      ),
-                    ],
                   ),
                   child: const Icon(
-                    Icons.smart_toy,
+                    Icons.auto_awesome,
                     color: Colors.white,
-                    size: 28,
+                    size: 24,
                   ),
                 ),
               ],
             ),
-            const SizedBox(height: 16),
-            const Text(
-              'I\'m your futuristic AI assistant. How can I help you today?',
+            const SizedBox(height: 12),
+            Text(
+              'Your AI assistant is ready. How can I help you today?',
               style: TextStyle(
                 color: AppColors.textSecondary,
                 fontSize: 16,
@@ -193,66 +168,59 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
               ),
             ),
             const SizedBox(height: 20),
-            _buildActionButtons(),
+            Row(
+              children: [
+                Expanded(
+                  child: _buildActionButton(
+                    icon: Icons.chat_bubble_outline,
+                    label: 'Chat',
+                    onTap: () => _navigateTo(const ChatScreen(), name: 'Chat'),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: _buildActionButton(
+                    icon: Icons.mic,
+                    label: 'Voice',
+                    primary: false,
+                    onTap: () => _navigateTo(const VoiceScreen(), name: 'Voice'),
+                  ),
+                ),
+              ],
+            ),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildActionButtons() {
-    return Row(
-      children: [
-        Expanded(
-          child: _buildActionButton(
-            icon: Icons.chat,
-            label: 'Chat',
-            onTap: () => Navigator.push(
-              context,
-              MaterialPageRoute(builder: (_) => const ChatScreen()),
-            ),
-          ),
-        ),
-        const SizedBox(width: 12),
-        Expanded(
-          child: _buildActionButton(
-            icon: Icons.mic,
-            label: 'Voice',
-            color: AppColors.secondary,
-            onTap: () => Navigator.push(
-              context,
-              MaterialPageRoute(builder: (_) => const VoiceScreen()),
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-
   Widget _buildActionButton({
     required IconData icon,
     required String label,
-    Color color = AppColors.primary,
     VoidCallback? onTap,
+    bool primary = true,
   }) {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 14),
+        padding: const EdgeInsets.symmetric(vertical: 16),
         decoration: BoxDecoration(
-          color: color.withOpacity(0.2),
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: color.withOpacity(0.5)),
+          color: primary ? AppColors.primary.withOpacity(0.1) : AppColors.surface,
+          borderRadius: BorderRadius.circular(16),
         ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(icon, color: color, size: 20),
+            Icon(
+              icon,
+              color: primary ? AppColors.primary : AppColors.textSecondary,
+              size: 20,
+            ),
             const SizedBox(width: 8),
             Text(
               label,
               style: TextStyle(
-                color: color,
+                color: primary ? AppColors.primary : AppColors.textSecondary,
                 fontWeight: FontWeight.w600,
               ),
             ),
@@ -264,31 +232,79 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
 
   Widget _buildQuickActions() {
     return FadeInUp(
-      delay: const Duration(milliseconds: 400),
-      child: Padding(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text(
-              'QUICK ACTIONS',
-              style: TextStyle(
-                color: AppColors.textTertiary,
-                fontSize: 12,
-                fontWeight: FontWeight.bold,
-                letterSpacing: 2,
-              ),
+      delay: const Duration(milliseconds: 300),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'QUICK ACTIONS',
+            style: TextStyle(
+              color: AppColors.textTertiary,
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+              letterSpacing: 1,
             ),
-            const SizedBox(height: 16),
-            AnimationConfiguration.staggeredGrid(
-              position: 0,
-              duration: const Duration(milliseconds: 500),
-              columnCount: 3,
-              child: ScaleAnimation(
-                child: FadeInAnimation(
-                  child: _buildQuickActionGrid(),
+          ),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              Expanded(
+                child: _buildFeatureCard(
+                  icon: Icons.search,
+                  label: 'Search Apps',
+                  onTap: () => _navigateTo(const SearchAppsScreen(), name: 'Search'),
                 ),
               ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildFeatureCard({
+    required IconData icon,
+    required String label,
+    VoidCallback? onTap,
+    Color? iconColor,
+  }) {
+    return GestureDetector(
+      onTap: () {
+        HapticFeedback.lightImpact();
+        onTap?.call();
+      },
+      child: GlassmorphicContainer(
+        padding: const EdgeInsets.all(20),
+        borderRadius: 20,
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: (iconColor ?? AppColors.primary).withOpacity(0.1),
+                borderRadius: BorderRadius.circular(14),
+              ),
+              child: Icon(
+                icon,
+                color: iconColor ?? AppColors.primary,
+                size: 24,
+              ),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Text(
+                label,
+                style: const TextStyle(
+                  color: AppColors.textPrimary,
+                  fontSize: 16,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ),
+            Icon(
+              Icons.arrow_forward_ios,
+              color: AppColors.textTertiary,
+              size: 16,
             ),
           ],
         ),
@@ -296,231 +312,166 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     );
   }
 
-  Widget _buildQuickActionGrid() {
-    final actions = [
-      {'icon': Icons.search, 'label': 'Search', 'onTap': () => _showComingSoon()},
-      {'icon': Icons.apps, 'label': 'Apps', 'onTap': () => _showComingSoon()},
-      {'icon': Icons.note_add, 'label': 'Notes', 'onTap': () => _showComingSoon()},
-      {'icon': Icons.calculate, 'label': 'Calc', 'onTap': () => _showComingSoon()},
-      {'icon': Icons.timer, 'label': 'Timer', 'onTap': () => _showComingSoon()},
-      {'icon': Icons.cloud, 'label': 'Weather', 'onTap': () => _showComingSoon()},
-    ];
-
-    return GridView.builder(
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 3,
-        mainAxisSpacing: 12,
-        crossAxisSpacing: 12,
-        childAspectRatio: 1.2,
-      ),
-      itemCount: actions.length,
-      itemBuilder: (context, index) {
-        final action = actions[index];
-        return GestureDetector(
-          onTap: action['onTap'] as VoidCallback,
-          child: GlassmorphicContainer(
-            padding: const EdgeInsets.all(12),
-            borderRadius: 16,
+  Widget _buildFeatureGrid() {
+    return FadeInUp(
+      delay: const Duration(milliseconds: 400),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'FEATURES',
+            style: TextStyle(
+              color: AppColors.textTertiary,
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+              letterSpacing: 1,
+            ),
+          ),
+          const SizedBox(height: 12),
+          GlassmorphicContainer(
+            padding: const EdgeInsets.all(20),
+            borderRadius: 20,
             child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(
-                  action['icon'] as IconData,
-                  color: AppColors.primary,
-                  size: 28,
-                ),
-                const SizedBox(height: 8),
+                _buildFeatureRow(Icons.image_outlined, 'Image Analysis', 'Analyze photos with AI', 0),
+                const Divider(color: AppColors.textTertiary, height: 24),
+                _buildFeatureRow(Icons.translate, 'Translate', 'Real-time translation', 1),
+                const Divider(color: AppColors.textTertiary, height: 24),
+                _buildFeatureRow(Icons.code, 'Code Help', 'Get coding assistance', 2),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildFeatureRow(IconData icon, String title, String subtitle, int index) {
+    return GestureDetector(
+      onTap: () {
+        HapticFeedback.lightImpact();
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('$title coming soon!'),
+            backgroundColor: AppColors.primary,
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+          ),
+        );
+      },
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: AppColors.primary.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Icon(icon, color: AppColors.primary, size: 22),
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
                 Text(
-                  action['label'] as String,
+                  title,
                   style: const TextStyle(
-                    color: AppColors.textSecondary,
-                    fontSize: 12,
+                    color: AppColors.textPrimary,
+                    fontSize: 16,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                Text(
+                  subtitle,
+                  style: TextStyle(
+                    color: AppColors.textTertiary,
+                    fontSize: 13,
                   ),
                 ),
               ],
             ),
           ),
-        );
-      },
-    );
-  }
-
-  void _showComingSoon() {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: const Text('Feature coming soon!', textAlign: TextAlign.center),
-        backgroundColor: AppColors.primary,
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-        margin: const EdgeInsets.all(16),
+          Icon(
+            Icons.chevron_right,
+            color: AppColors.textTertiary,
+            size: 20,
+          ),
+        ],
       ),
     );
   }
 
-  Widget _buildAICommands() {
+  Widget _buildVoiceSection() {
     return FadeInUp(
-      delay: const Duration(milliseconds: 600),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text(
-              'VOICE COMMANDS',
-              style: TextStyle(
-                color: AppColors.textTertiary,
-                fontSize: 12,
-                fontWeight: FontWeight.bold,
-                letterSpacing: 2,
-              ),
-            ),
-            const SizedBox(height: 16),
-            GlassmorphicContainer(
-              padding: const EdgeInsets.all(20),
-              borderRadius: 16,
-              child: Column(
-                children: [
-                  _buildCommandItem('Open Chrome', Icons.language, () => _showComingSoon()),
-                  _buildCommandItem('Set Alarm', Icons.alarm, () => _showComingSoon()),
-                  _buildCommandItem('Send Message', Icons.message, () => _showComingSoon()),
-                  _buildCommandItem('Play Music', Icons.music_note, () => _showComingSoon()),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildCommandItem(String command, IconData icon, VoidCallback onTap) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 8),
+      delay: const Duration(milliseconds: 500),
+      child: GlassmorphicContainer(
+        padding: const EdgeInsets.all(20),
+        borderRadius: 20,
         child: Row(
           children: [
             Container(
-              padding: const EdgeInsets.all(8),
+              padding: const EdgeInsets.all(14),
               decoration: BoxDecoration(
-                color: AppColors.glassPrimary,
-                borderRadius: BorderRadius.circular(10),
+                gradient: const LinearGradient(colors: AppColors.primaryGradient),
+                borderRadius: BorderRadius.circular(16),
               ),
-              child: Icon(icon, color: AppColors.secondary, size: 20),
+              child: const Icon(
+                Icons.mic,
+                color: Colors.white,
+                size: 24,
+              ),
             ),
             const SizedBox(width: 16),
-            Text(
-              command,
-              style: const TextStyle(
-                color: AppColors.textPrimary,
-                fontSize: 16,
-              ),
-            ),
-            const Spacer(),
-            Icon(
-              Icons.chevron_right,
-              color: AppColors.textTertiary,
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildGamingMode() {
-    bool _gamingMode = false;
-    return StatefulBuilder(
-      builder: (context, setState) {
-        return FadeInUp(
-          delay: const Duration(milliseconds: 800),
-          child: Padding(
-            padding: const EdgeInsets.all(20),
-            child: GlassmorphicContainer(
-              padding: const EdgeInsets.all(20),
-              borderRadius: 20,
-              borderColor: AppColors.glassCyan,
-              child: Row(
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Container(
-                    padding: const EdgeInsets.all(14),
-                    decoration: BoxDecoration(
-                      gradient: const LinearGradient(colors: AppColors.neonGradient),
-                      borderRadius: BorderRadius.circular(14),
-                      boxShadow: [
-                        BoxShadow(
-                          color: AppColors.accent.withOpacity(0.4),
-                          blurRadius: 15,
-                        ),
-                      ],
-                    ),
-                    child: const Icon(
-                      Icons.sports_esports,
-                      color: Colors.white,
-                      size: 24,
+                  const Text(
+                    'Voice Assistant',
+                    style: TextStyle(
+                      color: AppColors.textPrimary,
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
                     ),
                   ),
-                  const SizedBox(width: 16),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const NeonText(
-                          text: 'Gaming Mode',
-                          fontSize: 18,
-                          color: AppColors.accent,
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          _gamingMode ? 'Enhanced performance' : 'Tap to enable',
-                          style: TextStyle(
-                            color: AppColors.textSecondary,
-                            fontSize: 14,
-                          ),
-                        ),
-                      ],
+                  const SizedBox(height: 4),
+                  Text(
+                    'Tap to speak',
+                    style: TextStyle(
+                      color: AppColors.textTertiary,
+                      fontSize: 14,
                     ),
-                  ),
-                  Switch(
-                    value: _gamingMode,
-                    onChanged: (value) => setState(() => _gamingMode = value),
-                    activeColor: AppColors.primary,
                   ),
                 ],
               ),
             ),
-          ),
-        );
-      },
+            GestureDetector(
+              onTap: () => _navigateTo(const VoiceScreen()),
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                decoration: BoxDecoration(
+                  color: AppColors.primary,
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: const Text(
+                  'Start',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 
   @override
   void dispose() {
-    _pulseController.dispose();
+    _fadeController.dispose();
     super.dispose();
   }
-}
-
-class BackgroundPainter extends CustomPainter {
-  @override
-  void paint(Canvas canvas, Size size) {
-    final paint = Paint()
-      ..color = AppColors.primary.withOpacity(0.1)
-      ..style = PaintingStyle.fill;
-
-    // Draw animated circles
-    final random = Random(42);
-    for (int i = 0; i < 15; i++) {
-      final x = random.nextDouble() * size.width;
-      final y = random.nextDouble() * size.height;
-      final radius = random.nextDouble() * 100 + 50;
-      paint.color = AppColors.primary.withOpacity(0.03 + random.nextDouble() * 0.05);
-      canvas.drawCircle(Offset(x, y), radius, paint);
-    }
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }

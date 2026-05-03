@@ -20,7 +20,9 @@ class ChatMessage {
 }
 
 class ChatScreen extends StatefulWidget {
-  const ChatScreen({super.key});
+  final String? initialMessage;
+  
+  const ChatScreen({super.key, this.initialMessage});
 
   @override
   State<ChatScreen> createState() => _ChatScreenState();
@@ -38,6 +40,15 @@ class _ChatScreenState extends State<ChatScreen> {
   void initState() {
     super.initState();
     _welcomeMessage();
+    
+    // Handle initial message from voice
+    if (widget.initialMessage != null && widget.initialMessage!.isNotEmpty) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        // Set the message and send
+        _messageController.text = widget.initialMessage!;
+        _sendMessage();
+      });
+    }
   }
 
   void _welcomeMessage() {
