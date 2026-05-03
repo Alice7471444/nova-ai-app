@@ -1,19 +1,17 @@
-<p align="center">
-  <img src="https://capsule-render.vercel.app/api?type=waving&color=00F0FF&height=300&section=header&text=NOVA%20AI&fontSize=90&animation=fadeIn&desc=The%20Future%20of%20AI%20 Assistants&descAlignY=75&descSize=24&color=FF00FF" width="100%"/>
-</p>
+<div align="center">
 
-<p align="center">
-  <img src="https://img.shields.io/badge/Android-5.0%2B-00F0FF?style=for-the-badge&logo=android&logoColor=00F0FF"/>
-  <img src="https://img.shields.io/badge/Flutter-3.24.5-00F0FF?style=for-the-badge&logo=flutter&logoColor=00F0FF"/>
-  <img src="https://img.shields.io/badge/License-MIT-00F0FF?style=for-the-badge"/>
-  <img src="https://img.shields.io/github/v/release/Alice7471444/nova-ai-app?style=for-the-badge&color=00F0FF"/>
-</p>
+# 🌀 NOVA AI
+
+### The Future of AI Assistants
+
+[![Android](https://img.shields.io/badge/Android-5.0%2B-00F0FF?style=for-the-badge&logo=android)](https://flutter.dev)
+[![Flutter](https://img.shields.io/badge/Flutter-3.24.5-00F0FF?style=for-the-badge&logo=flutter)](https://flutter.dev)
+[![License](https://img.shields.io/badge/License-MIT-00F0FF?style=for-the-badge)](LICENSE)
+[![Download APK](https://img.shields.io/github/v/release/Alice7471444/nova-ai-app?style=for-the-badge&color=00F0FF&label=APK)](https://github.com/Alice7471444/nova-ai-app/releases)
 
 ---
 
-<p align="center">
-  <img src="https://readme-typing-svg.demolab.com?font=Fira+Code&weight=600&size=30&duration=3000&pause=500&color=00F0FF&center=true&vCenter=true&repeat=false&text=Your+Futuristic+AI+Assistant" width="100%"/>
-</p>
+**NOVA AI** - A futuristic Android AI assistant app with cyberpunk/premium design. Features AI chat, voice assistant, customizable themes, and more!
 
 ---
 
@@ -30,14 +28,22 @@
 
 ---
 
-## 📱 Screenshots
+## App Preview
 
-<p align="center">
-  <img src="https://via.placeholder.com/300x600/0A0A0F/00F0FF?text=Home+Screen" width="200"/>
-  <img src="https://via.placeholder.com/300x600/0A0A0F/FF00FF?text=Chat+Screen" width="200"/>
-  <img src="https://via.placeholder.com/300x600/0A0A0F/00FF88?text=Voice+Screen" width="200"/>
-  <img src="https://via.placeholder.com/300x600/0A0A0F/FFFF00?text=Settings+Screen" width="200"/>
-</p>
+```
+┌─────────────────────────────────┐
+│          🌀 NOVA AI              │
+│  ┌─────────────────────────────┐  │
+│  │  Welcome to the Future!   │  │
+│  │   Your AI Assistant      │  │
+│  └─────────────────────────────┘  │
+│                                 │
+│  [🤖 Chat]  [🎤 Voice]        │
+│  [🏠 Home]   [⚙ Settings]     │
+│                                 │
+│    ● ○ ○   Gaming Mode: OFF     │
+└─────────────────────────────────┘
+```
 
 ---
 
@@ -86,9 +92,9 @@ flutter build apk --debug
 |-------|-----|-------|
 | 🟦 Neon Cyan | `#00F0FF` | Primary, accents |
 | 🟪 Neon Magenta | `#FF00FF` | Secondary |
-| 🟩 Neon Green | `#00FF88` | Success, gaming mode |
+| 🟩 Neon Green | `#00FF88` | Gaming mode |
 | ⬛ Dark Black | `#0A0A0F` | Background |
-| ⬜ Surface Dark | `#1A1A2E` | Cards, containers |
+| ⬜ Surface Dark | `#1A1A2E` | Cards |
 
 ---
 
@@ -97,21 +103,34 @@ flutter build apk --debug
 ```
 nova_ai/
 ├── lib/
-│   ├── main.dart                    # App entry
+│   ├── main.dart                    # App entry point
 │   ├── core/
-│   │   ├── theme/                   # Colors & theme
-│   │   ├── constants/               # App constants
-│   │   └── services/                # AI services
+│   │   ├── theme/                   # App colors & theme
+│   │   ├── constants/              # App constants  
+│   │   └── services/              # AI services (OpenAI/Gemini)
 │   ├── data/
-│   │   └── models/                   # Data models
+│   │   └── models/                # Data models
 │   └── presentation/
-│       ├── screens/                  # UI screens
-│       └── widgets/                  # Custom widgets
-├── android/                         # Android config
-├── ios/                            # iOS config (future)
-├── pubspec.yaml                    # Dependencies
-└── README.md                       # This file
+│       ├── screens/               # UI screens
+│       │   ├── home_screen.dart
+│       │   ├── chat_screen.dart
+│       │   ├── voice_screen.dart
+│       │   └── settings_screen.dart
+│       └── widgets/               # Custom widgets
+│           ├── neon_text.dart
+│           ├── glassmorphic_container.dart
+│           └── chat_bubble.dart
+├── android/                       # Android config
+├── pubspec.yaml                  # Dependencies
+├── README.md                    # This file
+└── LICENSE                     # MIT License
 ```
+
+---
+
+## 📥 Download APK
+
+**[Download Latest APK](https://github.com/Alice7471444/nova-ai-app/releases/download/v1.1.0/nova-ai-debug.apk)**
 
 ---
 
@@ -131,12 +150,8 @@ MIT License - See [LICENSE](LICENSE)
 
 ---
 
-<p align="center">
-  <img src="https://komarev.com/ghpvc/?username=nova-ai-app&label=Views&style=flat&color=00F0FF&labelColor=1A1A2E" alt="views"/>
-  <img src="https://badges.toadhouse.it/tenor/nova-ai-app/gifs?style=flat&color=FF00FF" alt="gifs"/>
-</p>
+**Made with ❤️ using Flutter**
 
-<p align="center">
-  <strong>Made with ❤️ using Flutter</strong><br/>
-  <sub>NOVA AI - The Future is Now</sub>
-</p>
+*NOVA AI - The Future is Now* 🌀
+
+</div>
