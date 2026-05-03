@@ -1,478 +1,406 @@
-import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:animate_do/animate_do.dart';
+import 'package:uuid/uuid.dart';
 import '../../core/theme/app_colors.dart';
+import '../../core/services/auth_service.dart';
 import '../../core/services/ai_service.dart';
-import '../widgets/glassmorphic_container.dart';
-import 'chat_screen.dart';
-import 'voice_screen.dart';
+import 'sketch_to_image_screen.dart';
 import 'settings_screen.dart';
-import 'search_apps_screen.dart';
 
 class HomeScreen extends StatefulWidget {
-  const HomeScreen({super.key});
+  final AIService aiService;
+  final AuthService authService;
+  
+  const HomeScreen({super.key, required this.aiService, required this.authService});
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();
 }
 
-class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateMixin {
-  late AnimationController _fadeController;
+class _HomeScreenState extends State<HomeScreen> {
+  final _uuid = const Uuid();
+  int _currentTab = 0;
+  final _messages = <_Message>[];
+  final _controller = TextEditingController();
+  final _scrollController = ScrollController();
+  bool _isTyping = false;
 
   @override
   void initState() {
     super.initState();
-    _fadeController = AnimationController(
-      duration: const Duration(milliseconds: 800),
-      vsync: this,
-    )..forward();
+    _addWelcome();
   }
 
-  void _navigateTo(Widget page, {String? name}) {
+  void _addWelcome() {
+    _messages.add(_Message(
+      id: _uuid.v4(),
+      content: "Hey! I'm NOVA AI. How can I help you today?",
+      isUser: false,
+    ));
+  }
+
+  Future<void> _send() async {
+    final text = _controller.text.trim();
+    if (text.isEmpty) return;
+    
+    _controller.clear();
     HapticFeedback.lightImpact();
-    Navigator.push(
-      context,
-      PageRouteBuilder(
-        pageBuilder: (_, __, ___) => page,
-        transitionsBuilder: (_, animation, __, child) {
-          return FadeTransition(opacity: animation, child: child);
-        },
-        transitionDuration: const Duration(milliseconds: 300),
-      ),
+    
+    _messages.add(_Message(id: _uuid.v4(), content: text, isUser: true));
+    setState(() => _isTyping = true);
+    _scroll();
+    
+    final response = await widget.aiService.generateResponse(text);
+    
+    setState(() {
+      _messages.add(_Message(id: _uuid.v4(), content: response, isUser: false));
+      _isTyping = false;
+    });
+    
+    _scroll();
+  }
+
+  void _scroll() {
+    Future.delayed(const Duration(milliseconds: 100), () {
+      if (_scrollController.hasClients) {
+        _scrollController.animateTo(
+          _scrollController.position.maxScrollExtent,
+          duration: const Duration(milliseconds: 300),
+          curve: Curves.easeOut,
+        );
+      }
+    });
+  }
+
+  void _showSettings() {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (_) => _SettingsSheet(authService: widget.authService),
     );
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.background,
-      body: SafeArea(
-        child: FadeTransition(
-          opacity: _fadeController,
-          child: SingleChildScrollView(
-            physics: const BouncingScrollPhysics(),
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const SizedBox(height: 20),
-                  _buildHeader(),
-                  const SizedBox(height: 24),
-                  _buildWelcomeCard(),
-                  const SizedBox(height: 24),
-                  _buildQuickActions(),
-                  const SizedBox(height: 24),
-                  _buildFeatureGrid(),
-                  const SizedBox(height: 24),
-                  _buildVoiceSection(),
-                  const SizedBox(height: 40),
-                ],
-              ),
-            ),
+      backgroundColor: Colors.black,
+      appBar: _buildAppBar(),
+      body: IndexedStack(index: _currentTab, children: [_chatTab(), _discoverTab(), _settingsTab(), const SketchToImageScreen()]),
+      bottomNavigationBar: _buildBottomNav(),
+    );
+  }
+
+  PreferredSizeWidget _buildAppBar() {
+    return AppBar(
+      backgroundColor: Colors.transparent,
+      elevation: 0,
+      title: Row(children: [
+        Container(
+          width: 36, height: 36,
+          decoration: const BoxDecoration(
+            shape: BoxShape.circle,
+            gradient: LinearGradient(colors: AppColors.primaryGradient),
+          ),
+          child: const Center(
+            child: Text('N', style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
           ),
         ),
-      ),
+        const SizedBox(width: 12),
+        const Text('NOVA AI', style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w600)),
+      ]),
+      actions: [
+        IconButton(icon: const Icon(Icons.more_vert, color: Colors.white), onPressed: _showSettings),
+      ],
     );
   }
 
-  Widget _buildHeader() {
-    return FadeInDown(
-      delay: const Duration(milliseconds: 100),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'Welcome back',
-                style: TextStyle(
-                  color: AppColors.textTertiary,
-                  fontSize: 14,
-                ),
-              ),
-              const SizedBox(height: 4),
-              const Text(
-                'NOVA AI',
-                style: TextStyle(
-                  color: AppColors.textPrimary,
-                  fontSize: 28,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ],
-          ),
-          GestureDetector(
-            onTap: () => _navigateTo(const SettingsScreen()),
-            child: Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: AppColors.surface,
-                borderRadius: BorderRadius.circular(14),
-                boxShadow: AppColors.cardShadow,
-              ),
-              child: const Icon(
-                Icons.settings_outlined,
-                color: AppColors.textSecondary,
-                size: 24,
-              ),
-            ),
-          ),
-        ],
+  Widget _chatTab() {
+    return Column(children: [
+      Expanded(
+        child: ListView.builder(
+          controller: _scrollController,
+          padding: const EdgeInsets.all(16),
+          itemCount: _messages.length + (_isTyping ? 1 : 0),
+          itemBuilder: (ctx, i) {
+            if (_isTyping && i == _messages.length) return _typingIndicator();
+            return _buildMessage(_messages[i]);
+          },
+        ),
       ),
-    );
+      _buildInput(),
+    ]);
   }
 
-  Widget _buildWelcomeCard() {
+  Widget _buildMessage(_Message msg) {
     return FadeInUp(
-      delay: const Duration(milliseconds: 200),
-      child: GlassmorphicContainer(
-        padding: const EdgeInsets.all(24),
-        borderRadius: 24,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                const Text(
-                  'Hello!',
-                  style: TextStyle(
-                    color: AppColors.textPrimary,
-                    fontSize: 28,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-                Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    gradient: const LinearGradient(colors: AppColors.primaryGradient),
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                  child: const Icon(
-                    Icons.auto_awesome,
-                    color: Colors.white,
-                    size: 24,
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 12),
-            Text(
-              'Your AI assistant is ready. How can I help you today?',
-              style: TextStyle(
-                color: AppColors.textSecondary,
-                fontSize: 16,
-                height: 1.5,
-              ),
-            ),
-            const SizedBox(height: 20),
-            Row(
-              children: [
-                Expanded(
-                  child: _buildActionButton(
-                    icon: Icons.chat_bubble_outline,
-                    label: 'Chat',
-                    onTap: () => _navigateTo(const ChatScreen(), name: 'Chat'),
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: _buildActionButton(
-                    icon: Icons.mic,
-                    label: 'Voice',
-                    primary: false,
-                    onTap: () => _navigateTo(const VoiceScreen(), name: 'Voice'),
-                  ),
-                ),
-              ],
-            ),
-          ],
+      key: ValueKey(msg.id),
+      child: Align(
+        alignment: msg.isUser ? Alignment.centerRight : Alignment.centerLeft,
+        child: Container(
+          margin: const EdgeInsets.only(bottom: 12),
+          padding: const EdgeInsets.all(16),
+          constraints: BoxConstraints(maxWidth: MediaQuery.of(context).size.width * 0.75),
+          decoration: BoxDecoration(
+            color: msg.isUser ? AppColors.primary : Colors.white.withOpacity(0.1),
+            borderRadius: BorderRadius.circular(20),
+          ),
+          child: Text(msg.content, style: const TextStyle(color: Colors.white, fontSize: 15)),
         ),
       ),
     );
   }
 
-  Widget _buildActionButton({
-    required IconData icon,
-    required String label,
-    VoidCallback? onTap,
-    bool primary = true,
-  }) {
+  Widget _typingIndicator() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      child: Row(children: [
+        Container(
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(color: Colors.white.withOpacity(0.1), borderRadius: BorderRadius.circular(16)),
+          child: Row(mainAxisSize: MainAxisSize.min, children: List.generate(3, (i) => _dot(i))),
+        ),
+      ]),
+    );
+  }
+
+  Widget _dot(int i) {
+    return TweenAnimationBuilder<double>(
+      tween: Tween(begin: 0.0, end: 1.0),
+      duration: Duration(milliseconds: 600 + i * 200),
+      builder: (ctx, v, child) {
+        return Container(
+          margin: const EdgeInsets.symmetric(horizontal: 2),
+          width: 6, height: 6,
+          decoration: BoxDecoration(color: AppColors.primary.withOpacity(0.3 + v * 0.7), shape: BoxShape.circle),
+        );
+      },
+    );
+  }
+
+  Widget _buildInput() {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      child: Row(children: [
+        Expanded(
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            decoration: BoxDecoration(color: Colors.white.withOpacity(0.1), borderRadius: BorderRadius.circular(24)),
+            child: TextField(
+              controller: _controller,
+              style: const TextStyle(color: Colors.white),
+              decoration: const InputDecoration(
+                hintText: 'Message NOVA AI...',
+                hintStyle: TextStyle(color: Colors.white38),
+                border: InputBorder.none,
+              ),
+              onSubmitted: (_) => _send(),
+            ),
+          ),
+        ),
+        const SizedBox(width: 12),
+        GestureDetector(
+          onTap: _send,
+          child: Container(
+            padding: const EdgeInsets.all(12),
+            decoration: const BoxDecoration(color: AppColors.primary, shape: BoxShape.circle),
+            child: const Icon(Icons.send, color: Colors.white, size: 20),
+          ),
+        ),
+      ]),
+    );
+  }
+
+  Widget _discoverTab() {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(16),
+      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        const Text('Discover', style: TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold)),
+        const SizedBox(height: 8),
+        Text('Explore AI features', style: TextStyle(color: Colors.white.withOpacity(0.5))),
+        const SizedBox(height: 24),
+        _featureCard('Voice AI', 'Talk to NOVA', Icons.mic, Colors.blue),
+        const SizedBox(height: 12),
+        _featureCard('Image Gen', 'Create images', Icons.image, Colors.purple),
+        const SizedBox(height: 12),
+        _featureCard('Code Assist', 'Get coding help', Icons.code, Colors.green),
+      ]),
+    );
+  }
+
+  Widget _featureCard(String title, String subtitle, IconData icon, Color color) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: color.withOpacity(0.3)),
+      ),
+      child: Row(children: [
+        Container(
+          width: 50, height: 50,
+          decoration: BoxDecoration(color: color.withOpacity(0.2), borderRadius: BorderRadius.circular(12)),
+          child: Icon(icon, color: color),
+        ),
+        const SizedBox(width: 16),
+        Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Text(title, style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w600)),
+          Text(subtitle, style: TextStyle(color: Colors.white.withOpacity(0.5), fontSize: 14)),
+        ])),
+        const Icon(Icons.chevron_right, color: Colors.white38),
+      ]),
+    );
+  }
+
+  Widget _settingsTab() {
+    return SettingsScreen(authService: widget.authService);
+  }
+
+  Widget _settingItem(String title, IconData icon, VoidCallback onTap) {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 16),
-        decoration: BoxDecoration(
-          color: primary ? AppColors.primary.withOpacity(0.1) : AppColors.surface,
-          borderRadius: BorderRadius.circular(16),
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              icon,
-              color: primary ? AppColors.primary : AppColors.textSecondary,
-              size: 20,
-            ),
-            const SizedBox(width: 8),
-            Text(
-              label,
-              style: TextStyle(
-                color: primary ? AppColors.primary : AppColors.textSecondary,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildQuickActions() {
-    return FadeInUp(
-      delay: const Duration(milliseconds: 300),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text(
-            'QUICK ACTIONS',
-            style: TextStyle(
-              color: AppColors.textTertiary,
-              fontSize: 12,
-              fontWeight: FontWeight.w600,
-              letterSpacing: 1,
-            ),
-          ),
-          const SizedBox(height: 12),
-          Row(
-            children: [
-              Expanded(
-                child: _buildFeatureCard(
-                  icon: Icons.search,
-                  label: 'Search Apps',
-                  onTap: () => _navigateTo(const SearchAppsScreen(), name: 'Search'),
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildFeatureCard({
-    required IconData icon,
-    required String label,
-    VoidCallback? onTap,
-    Color? iconColor,
-  }) {
-    return GestureDetector(
-      onTap: () {
-        HapticFeedback.lightImpact();
-        onTap?.call();
-      },
-      child: GlassmorphicContainer(
-        padding: const EdgeInsets.all(20),
-        borderRadius: 20,
-        child: Row(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: (iconColor ?? AppColors.primary).withOpacity(0.1),
-                borderRadius: BorderRadius.circular(14),
-              ),
-              child: Icon(
-                icon,
-                color: iconColor ?? AppColors.primary,
-                size: 24,
-              ),
-            ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: Text(
-                label,
-                style: const TextStyle(
-                  color: AppColors.textPrimary,
-                  fontSize: 16,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-            ),
-            Icon(
-              Icons.arrow_forward_ios,
-              color: AppColors.textTertiary,
-              size: 16,
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildFeatureGrid() {
-    return FadeInUp(
-      delay: const Duration(milliseconds: 400),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text(
-            'FEATURES',
-            style: TextStyle(
-              color: AppColors.textTertiary,
-              fontSize: 12,
-              fontWeight: FontWeight.w600,
-              letterSpacing: 1,
-            ),
-          ),
-          const SizedBox(height: 12),
-          GlassmorphicContainer(
-            padding: const EdgeInsets.all(20),
-            borderRadius: 20,
-            child: Column(
-              children: [
-                _buildFeatureRow(Icons.image_outlined, 'Image Analysis', 'Analyze photos with AI', 0),
-                const Divider(color: AppColors.textTertiary, height: 24),
-                _buildFeatureRow(Icons.translate, 'Translate', 'Real-time translation', 1),
-                const Divider(color: AppColors.textTertiary, height: 24),
-                _buildFeatureRow(Icons.code, 'Code Help', 'Get coding assistance', 2),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildFeatureRow(IconData icon, String title, String subtitle, int index) {
-    return GestureDetector(
-      onTap: () {
-        HapticFeedback.lightImpact();
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('$title coming soon!'),
-            backgroundColor: AppColors.primary,
-            behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-          ),
-        );
-      },
-      child: Row(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(
-              color: AppColors.primary.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Icon(icon, color: AppColors.primary, size: 22),
-          ),
+        margin: const EdgeInsets.only(bottom: 8),
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(color: Colors.white.withOpacity(0.1), borderRadius: BorderRadius.circular(16)),
+        child: Row(children: [
+          Icon(icon, color: Colors.white70),
           const SizedBox(width: 16),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  style: const TextStyle(
-                    color: AppColors.textPrimary,
-                    fontSize: 16,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-                Text(
-                  subtitle,
-                  style: TextStyle(
-                    color: AppColors.textTertiary,
-                    fontSize: 13,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          Icon(
-            Icons.chevron_right,
-            color: AppColors.textTertiary,
-            size: 20,
-          ),
+          Text(title, style: const TextStyle(color: Colors.white, fontSize: 16)),
+          const Spacer(),
+          const Icon(Icons.chevron_right, color: Colors.white38),
+        ]),
+      ),
+    );
+  }
+
+  Widget _buildBottomNav() {
+    return Container(
+      margin: const EdgeInsets.all(16),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(28),
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceAround,
+        children: [
+          _navItem(Icons.chat_bubble, 'Chat', 0),
+          _navItem(Icons.brush, 'Sketch', 3),
+          _navItem(Icons.explore, 'Discover', 1),
+          _navItem(Icons.settings, 'Settings', 2),
         ],
       ),
     );
   }
 
-  Widget _buildVoiceSection() {
-    return FadeInUp(
-      delay: const Duration(milliseconds: 500),
-      child: GlassmorphicContainer(
-        padding: const EdgeInsets.all(20),
-        borderRadius: 20,
-        child: Row(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(14),
-              decoration: BoxDecoration(
-                gradient: const LinearGradient(colors: AppColors.primaryGradient),
-                borderRadius: BorderRadius.circular(16),
-              ),
-              child: const Icon(
-                Icons.mic,
-                color: Colors.white,
-                size: 24,
-              ),
-            ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    'Voice Assistant',
-                    style: TextStyle(
-                      color: AppColors.textPrimary,
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    'Tap to speak',
-                    style: TextStyle(
-                      color: AppColors.textTertiary,
-                      fontSize: 14,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            GestureDetector(
-              onTap: () => _navigateTo(const VoiceScreen()),
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                decoration: BoxDecoration(
-                  color: AppColors.primary,
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: const Text(
-                  'Start',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ),
-            ),
+  Widget _navItem(IconData icon, String label, int index) {
+    final isSelected = _currentTab == index;
+    return GestureDetector(
+      onTap: () { setState(() => _currentTab = index); HapticFeedback.mediumImpact(); },
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: EdgeInsets.symmetric(horizontal: isSelected ? 16 : 8, vertical: 8),
+        decoration: isSelected
+            ? const BoxDecoration(
+                gradient: LinearGradient(colors: AppColors.primaryGradient),
+                borderRadius: BorderRadius.all(Radius.circular(20)),
+              )
+            : null,
+        child: Row(children: [
+          Icon(icon, color: isSelected ? Colors.white : Colors.white54, size: 20),
+          if (isSelected) ...[
+            const SizedBox(width: 8),
+            Text(label, style: const TextStyle(color: Colors.white, fontSize: 12)),
           ],
-        ),
+        ]),
       ),
     );
+  }
+
+  Future<void> _logout() async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (_) => AlertDialog(
+        backgroundColor: const Color(0xFF1C1C1E),
+        title: const Text('Sign Out', style: TextStyle(color: Colors.white)),
+        content: const Text('Are you sure you want to sign out?', style: TextStyle(color: Colors.white70)),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancel')),
+          TextButton(onPressed: () => Navigator.pop(context, true), child: const Text('Sign Out', style: TextStyle(color: Colors.red))),
+        ],
+      ),
+    );
+
+    if (confirm == true) {
+      await widget.authService.signOut();
+      if (mounted) Navigator.pushNamedAndRemoveUntil(context, '/', (_) => true);
+    }
   }
 
   @override
   void dispose() {
-    _fadeController.dispose();
+    _controller.dispose();
+    _scrollController.dispose();
     super.dispose();
+  }
+}
+
+class _Message {
+  final String id;
+  final String content;
+  final bool isUser;
+  _Message({required this.id, required this.content, required this.isUser});
+}
+
+class _SettingsSheet extends StatelessWidget {
+  final AuthService authService;
+  const _SettingsSheet({required this.authService});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(24),
+      decoration: const BoxDecoration(
+        color: Color(0xFF1C1C1E),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      child: Column(mainAxisSize: MainAxisSize.min, children: [
+        Container(width: 40, height: 4, decoration: BoxDecoration(color: Colors.white24, borderRadius: BorderRadius.circular(2))),
+        const SizedBox(height: 24),
+        const Text('Quick Settings', style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w600)),
+        const SizedBox(height: 24),
+        _sheetItem('Dark Mode', Icons.dark_mode, true),
+        _sheetItem('Notifications', Icons.notifications, true),
+        const SizedBox(height: 16),
+        SizedBox(
+          width: double.infinity,
+          child: ElevatedButton(
+            onPressed: () async {
+              await authService.signOut();
+              if (context.mounted) Navigator.pushNamedAndRemoveUntil(context, '/', (_) => true);
+            },
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.red, padding: const EdgeInsets.symmetric(vertical: 14)),
+            child: const Text('Sign Out', style: TextStyle(color: Colors.white)),
+          ),
+        ),
+      ]),
+    );
+  }
+
+  Widget _sheetItem(String title, IconData icon, bool value) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 8),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(color: Colors.white.withOpacity(0.1), borderRadius: BorderRadius.circular(12)),
+      child: Row(children: [
+        Icon(icon, color: Colors.white70),
+        const SizedBox(width: 16),
+        Text(title, style: const TextStyle(color: Colors.white)),
+        const Spacer(),
+        Switch(value: value, onChanged: (_) {}, activeColor: AppColors.primary),
+      ]),
+    );
   }
 }
