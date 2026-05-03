@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:animate_do/animate_do.dart';
 import '../../core/theme/app_colors.dart';
+import '../../core/services/ai_service.dart';
 import '../widgets/glassmorphic_container.dart';
 import 'chat_screen.dart';
 import 'voice_screen.dart';

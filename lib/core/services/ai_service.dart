@@ -71,19 +71,26 @@ class AIService {
   }
 
   // API key management
+  String _apiKey = '';
+  
   Future<String> _getApiKey() async {
     final prefs = await SharedPreferences.getInstance();
-    return prefs.getString(_apiKeyKey) ?? '';
+    _apiKey = prefs.getString(_apiKeyKey) ?? '';
+    return _apiKey;
   }
+
+  bool get isConfigured => _apiKey.isNotEmpty;
 
   Future<void> setApiKey(String key) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(_apiKeyKey, key);
+    _apiKey = key;
   }
 
   Future<void> clearApiKey() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove(_apiKeyKey);
+    _apiKey = '';
   }
 
   // Check if provider is available
